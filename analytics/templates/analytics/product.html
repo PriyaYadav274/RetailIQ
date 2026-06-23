@@ -1,0 +1,309 @@
+{% extends 'analytics/base.html' %}
+
+{% block page_title %}
+Products Analytics
+{% endblock %}
+
+{% block content %}
+
+<style>
+
+/* KPI */
+.cards{
+display:grid;
+grid-template-columns:repeat(4,1fr);
+gap:20px;
+margin-bottom:25px;
+}
+
+.card{
+background:white;
+padding:20px;
+border-radius:12px;
+box-shadow:0 5px 15px rgba(0,0,0,0.08);
+transition:0.3s;
+}
+
+.card:hover{
+transform:translateY(-5px);
+box-shadow:0 10px 25px rgba(0,0,0,0.15);
+}
+
+.card h3{
+font-size:14px;
+color:#64748b;
+margin:0;
+}
+
+.card h2{
+font-size:20px;
+margin-top:10px;
+color:#0f172a;
+}
+
+.good{ color:#10b981; }
+.danger{ color:#ef4444; }
+
+/* GRID */
+.grid-2{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:20px;
+margin-bottom:20px;
+}
+
+.table-container{
+background:white;
+padding:20px;
+border-radius:12px;
+box-shadow:0 5px 15px rgba(0,0,0,0.08);
+}
+
+/* TABLE */
+table{
+width:100%;
+border-collapse:collapse;
+}
+
+th, td{
+padding:10px;
+border-bottom:1px solid #eee;
+text-align:left;
+}
+
+th{ background:#f1f5f9; }
+
+tr:hover{ background:#f8fafc; }
+
+@media(max-width:900px){
+.grid-2{
+grid-template-columns:1fr;
+}
+}
+
+</style>
+
+<!-- KPI -->
+
+<div class="cards">
+
+<div class="card">
+<h3>Total Products</h3>
+<h2 id="totalProducts"></h2>
+</div>
+
+<div class="card">
+<h3>Low Stock Items</h3>
+<h2 id="lowStockCount" class="danger"></h2>
+</div>
+
+<div class="card">
+<h3>Best Seller</h3>
+<h2 id="bestProduct"></h2>
+</div>
+
+<div class="card">
+<h3>Avg Profit</h3>
+<h2 id="avgProfit" class="good"></h2>
+</div>
+
+</div>
+
+<!-- ROW 1 -->
+
+<div class="grid-2">
+
+<div class="table-container">
+<h3>Inventory Stock Levels</h3>
+
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Stock</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody id="inventoryTable"></tbody>
+</table>
+
+</div>
+
+<div class="table-container">
+<h3>Product Performance</h3>
+
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Sales</th>
+<th>Performance</th>
+</tr>
+</thead>
+<tbody id="performanceTable"></tbody>
+</table>
+
+</div>
+
+</div>
+
+<!-- ROW 2 -->
+
+<div class="grid-2">
+
+<div class="table-container">
+<h3>Profit Margin Per Product</h3>
+
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Profit</th>
+</tr>
+</thead>
+<tbody id="profitTable"></tbody>
+</table>
+
+</div>
+
+<!-- ✅ REPLACED CHART WITH SEASON MODULE -->
+
+<div class="table-container">
+<h3>Season Wise Best Selling Products</h3>
+
+<table>
+<thead>
+<tr>
+<th>Season</th>
+<th>Product</th>
+<th>Sales</th>
+</tr>
+</thead>
+<tbody id="seasonTable"></tbody>
+</table>
+
+</div>
+
+</div>
+
+<script>
+
+// ✅ SAFE DATA FROM DJANGO
+let inventory = JSON.parse('{{ inventory|default:"[]"|escapejs }}');
+let lowStock = JSON.parse('{{ low_stock|default:"[]"|escapejs }}');
+let bestProducts = JSON.parse('{{ best_products|default:"[]"|escapejs }}');
+let worstProducts = JSON.parse('{{ worst_products|default:"[]"|escapejs }}');
+let profitData = JSON.parse('{{ profit_data|default:"[]"|escapejs }}');
+let seasonalData = JSON.parse('{{ seasonal_products|default:"[]"|escapejs }}');
+
+// =======================
+// KPI
+// =======================
+
+document.getElementById("totalProducts").innerText = inventory.length;
+document.getElementById("lowStockCount").innerText = lowStock.length;
+document.getElementById("bestProduct").innerText = bestProducts[0]?.[0] || "N/A";
+
+let avgProfit = 0;
+if(profitData.length){
+    avgProfit = profitData.reduce((a,b)=>a+b[1],0) / profitData.length;
+}
+document.getElementById("avgProfit").innerText = avgProfit.toFixed(2);
+
+
+// =======================
+// 📦 INVENTORY TABLE
+// =======================
+
+let inventoryHTML = "";
+
+inventory.slice(0,10).forEach(p => {
+    let status = p[1] < 10 ? "Low" : "Good";
+    let cls = p[1] < 10 ? "danger" : "good";
+
+    inventoryHTML += `
+    <tr>
+        <td>${p[0]}</td>
+        <td>${p[1]}</td>
+        <td class="${cls}">${status}</td>
+    </tr>`;
+});
+
+document.getElementById("inventoryTable").innerHTML = inventoryHTML;
+
+
+// =======================
+// 🏆 PERFORMANCE (Top 5 Best + Worst)
+// =======================
+
+let perfHTML = "";
+
+// BEST
+bestProducts.slice(0,5).forEach(p => {
+    perfHTML += `
+    <tr>
+        <td>${p[0]}</td>
+        <td>${p[1]}</td>
+        <td class="good">Best Selling</td>
+    </tr>`;
+});
+
+// WORST
+worstProducts.slice(0,5).forEach(p => {
+    perfHTML += `
+    <tr>
+        <td>${p[0]}</td>
+        <td>${p[1]}</td>
+        <td class="danger">Worst Performing</td>
+    </tr>`;
+});
+
+document.getElementById("performanceTable").innerHTML = perfHTML;
+
+
+// =======================
+// 💰 PROFIT TABLE
+// =======================
+
+let profitHTML = "";
+
+profitData.slice(0,10).forEach(p => {
+    profitHTML += `
+    <tr>
+        <td>${p[0]}</td>
+        <td>${p[1].toFixed(2)}</td>
+    </tr>`;
+});
+
+document.getElementById("profitTable").innerHTML = profitHTML;
+
+
+// =======================
+// 🌦️ SEASON TABLE
+// =======================
+
+let seasonHTML = "";
+
+if(seasonalData.length){
+
+    seasonalData.forEach(s => {
+        seasonHTML += `
+        <tr>
+            <td>${s[0]}</td>
+            <td>${s[1]}</td>
+            <td>${s[2]}</td>
+        </tr>`;
+    });
+
+}else{
+    seasonHTML = `
+    <tr>
+        <td colspan="3">No seasonal data available</td>
+    </tr>`;
+}
+
+document.getElementById("seasonTable").innerHTML = seasonHTML;
+
+</script>
+
+{% endblock %}

@@ -1,0 +1,306 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Login - RetailIQ</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--gold:#f0b429;--gold-light:#ffd97d;--glass:rgba(10,18,48,0.72);--border:rgba(240,180,41,0.35);--text:#f5f0e8;--muted:rgba(245,240,232,0.55);}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+@keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+@keyframes borderGlow{0%,100%{opacity:.55}50%{opacity:1}}
+@keyframes scanline{0%{top:-4px}100%{top:100%}}
+@keyframes logoReveal{0%{letter-spacing:.6em;opacity:0}100%{letter-spacing:.18em;opacity:1}}
+@keyframes pulse-ring{0%{box-shadow:0 0 0 0 rgba(240,180,41,.5)}70%{box-shadow:0 0 0 15px rgba(240,180,41,0)}100%{box-shadow:0 0 0 0 rgba(240,180,41,0)}}
+body{margin:0;font-family:'DM Sans',sans-serif;height:100vh;display:flex;justify-content:center;align-items:center;overflow:hidden;background:#07102a;}
+canvas#bg{position:fixed;inset:0;z-index:0;}
+.overlay{position:fixed;inset:0;background:radial-gradient(ellipse 70% 60% at 15% 85%,rgba(240,180,41,.10) 0%,transparent 55%),radial-gradient(ellipse 60% 70% at 85% 15%,rgba(30,80,200,.18) 0%,transparent 55%),rgba(5,10,30,.40);z-index:1;pointer-events:none;}
+.grain{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.3;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");}
+.container{position:relative;z-index:10;background:var(--glass);backdrop-filter:blur(30px) saturate(1.8);-webkit-backdrop-filter:blur(30px) saturate(1.8);padding:52px 44px 48px;border-radius:22px;width:390px;text-align:center;border:1px solid var(--border);box-shadow:0 0 0 1px rgba(240,180,41,.10),0 36px 90px rgba(0,0,0,.55),inset 0 1px 0 rgba(240,180,41,.22);animation:fadeUp .9s cubic-bezier(.16,1,.3,1) both;overflow:hidden;}
+.container::before{content:'';position:absolute;left:0;right:0;height:4px;background:linear-gradient(90deg,transparent,rgba(240,180,41,.45),transparent);animation:scanline 4s linear infinite;pointer-events:none;z-index:20;}
+.container::after{content:'';position:absolute;top:0;left:15%;right:15%;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);animation:borderGlow 3s ease-in-out infinite;}
+.brand{margin-bottom:30px;animation:fadeUp 1s .15s cubic-bezier(.16,1,.3,1) both;}
+.brand-icon{width:54px;height:54px;margin:0 auto 14px;border-radius:15px;background:linear-gradient(135deg,rgba(240,180,41,.28),rgba(240,180,41,.08));border:1px solid rgba(240,180,41,.55);display:flex;align-items:center;justify-content:center;animation:pulse-ring 3s ease-out infinite;}
+.brand-icon svg{width:26px;height:26px;stroke:var(--gold);fill:none;stroke-width:1.5;}
+.brand h1{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:300;color:var(--text);animation:logoReveal 1.2s .3s cubic-bezier(.16,1,.3,1) both;text-transform:uppercase;}
+.brand-sub{font-size:10px;letter-spacing:.3em;color:var(--gold);text-transform:uppercase;margin-top:4px;font-weight:400;animation:fadeUp 1s .5s both;}
+.divider{display:flex;align-items:center;gap:12px;margin-bottom:26px;animation:fadeUp 1s .55s both;}
+.divider-line{flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--border));}
+.divider-line:last-child{background:linear-gradient(90deg,var(--border),transparent);}
+.divider-dot{width:4px;height:4px;border-radius:50%;background:var(--gold);opacity:.8;}
+.input-group{position:relative;margin-bottom:16px;animation:fadeUp 1s cubic-bezier(.16,1,.3,1) both;}
+.input-group:nth-child(1){animation-delay:.6s;}
+.input-group:nth-child(2){animation-delay:.72s;}
+.input-group svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:16px;height:16px;stroke:var(--muted);fill:none;stroke-width:1.5;transition:stroke .3s;pointer-events:none;}
+.input-group:focus-within svg{stroke:var(--gold);}
+input{width:100%;padding:14px 14px 14px 42px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:300;letter-spacing:.02em;transition:border-color .3s,background .3s,box-shadow .3s;outline:none;}
+input::placeholder{color:var(--muted);}
+input:focus{border-color:rgba(240,180,41,.65);background:rgba(240,180,41,.07);box-shadow:0 0 0 3px rgba(240,180,41,.12),inset 0 1px 0 rgba(240,180,41,.14);}
+input:-webkit-autofill,input:-webkit-autofill:focus{-webkit-box-shadow:0 0 0 100px rgb(12,20,52) inset;-webkit-text-fill-color:var(--text);}
+.btn-wrap{margin-top:24px;animation:fadeUp 1s .85s cubic-bezier(.16,1,.3,1) both;}
+button{width:100%;padding:15px;background:linear-gradient(135deg,#e8a510,#f0b429,#f5c84a);background-size:200% 200%;border:none;color:#160e00;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;border-radius:10px;cursor:pointer;position:relative;overflow:hidden;transition:transform .2s,box-shadow .3s,background-position .5s;box-shadow:0 4px 22px rgba(240,180,41,.40);}
+button::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.32) 50%,transparent 100%);background-size:400px 100%;background-position:-400px 0;}
+button:hover::before{animation:shimmer .7s ease forwards;}
+button:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(240,180,41,.55);}
+button:active{transform:translateY(0);box-shadow:0 2px 10px rgba(240,180,41,.25);}
+.message{margin-top:18px;color:#fca5a5;font-size:13px;font-weight:300;padding:10px 14px;background:rgba(252,165,165,.10);border:1px solid rgba(252,165,165,.25);border-radius:8px;animation:fadeUp .5s both;}
+.footer-note{margin-top:26px;font-size:10px;color:var(--muted);letter-spacing:.15em;text-transform:uppercase;animation:fadeUp 1s 1s both;}
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+<div class="overlay"></div>
+<div class="grain"></div>
+
+<div class="container">
+  <div class="brand">
+    <div class="brand-icon">
+      <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    </div>
+    <h1>RetailIQ</h1>
+    <p class="brand-sub">Intelligence Platform</p>
+  </div>
+  <div class="divider">
+    <div class="divider-line"></div>
+    <div class="divider-dot"></div>
+    <div class="divider-line"></div>
+  </div>
+  <form method="POST" action="{% url 'login' %}">
+    {% csrf_token %}
+    <div class="input-group">
+      <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+      <input type="email" name="email" placeholder="Email address" required>
+    </div>
+    <div class="input-group">
+      <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <input type="password" name="password" placeholder="Password" required>
+    </div>
+    <div class="btn-wrap">
+      <button type="submit">Access Dashboard</button>
+    </div>
+  </form>
+  {% if error %}<p class="message">{{ error }}</p>{% endif %}
+  <p class="footer-note">Secured &nbsp;·&nbsp; Encrypted &nbsp;·&nbsp; RetailIQ &copy; 2026</p>
+</div>
+
+<script>
+const canvas = document.getElementById('bg');
+const ctx = canvas.getContext('2d');
+let W, H;
+
+function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+resize();
+window.addEventListener('resize', resize);
+
+const G = (a) => `rgba(240,180,41,${a})`;
+const B = (a) => `rgba(72,145,255,${a})`;
+const T = (a) => `rgba(40,215,160,${a})`;
+
+function drawGrid(t) {
+  const sz = 58;
+  ctx.strokeStyle = G(0.08);
+  ctx.lineWidth = 0.5;
+  const ox = (t * 10) % sz, oy = (t * 5) % sz;
+  ctx.beginPath();
+  for (let x = -sz + ox; x < W + sz; x += sz) { ctx.moveTo(x, 0); ctx.lineTo(x, H); }
+  for (let y = -sz + oy; y < H + sz; y += sz) { ctx.moveTo(0, y); ctx.lineTo(W, y); }
+  ctx.stroke();
+}
+
+const NUM_BARS = 14;
+const barMeta = Array.from({length: NUM_BARS}, (_, i) => ({
+  phase: Math.random() * Math.PI * 2,
+  speed: 0.35 + Math.random() * 0.5,
+  base:  50 + Math.random() * 110,
+  col:   [G, B, T][i % 3],
+}));
+
+function drawBars(t) {
+  const pad = W * 0.04;
+  const slot = (W - pad * 2) / NUM_BARS;
+  const bw = slot * 0.42;
+  barMeta.forEach((b, i) => {
+    const h = b.base + Math.sin(t * b.speed + b.phase) * 38;
+    const x = pad + slot * i + slot / 2 - bw / 2;
+    const y = H - h - 20;
+    const grad = ctx.createLinearGradient(x, y + h, x, y);
+    grad.addColorStop(0, b.col(0.65));
+    grad.addColorStop(1, b.col(0.0));
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.roundRect(x, y, bw, h, [2, 2, 0, 0]);
+    ctx.fill();
+    ctx.fillStyle = b.col(1);
+    ctx.fillRect(x, y, bw, 1.5);
+  });
+}
+
+const LINES = [
+  { col: G, yRatio: 0.32, amp: 70, freq: 0.55, spd: 0.20, ph: 0   },
+  { col: B, yRatio: 0.52, amp: 55, freq: 0.48, spd: 0.17, ph: 1.8 },
+  { col: T, yRatio: 0.68, amp: 45, freq: 0.65, spd: 0.25, ph: 3.3 },
+];
+
+function spline(pts) {
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  for (let i = 1; i < pts.length - 1; i++) {
+    const mx = (pts[i].x + pts[i+1].x) / 2, my = (pts[i].y + pts[i+1].y) / 2;
+    ctx.quadraticCurveTo(pts[i].x, pts[i].y, mx, my);
+  }
+  ctx.lineTo(pts[pts.length-1].x, pts[pts.length-1].y);
+}
+
+function drawLines(t) {
+  LINES.forEach(l => {
+    const N = 42, pts = [];
+    const yBase = H * l.yRatio;
+    for (let i = 0; i <= N; i++) {
+      pts.push({
+        x: (W / N) * i,
+        y: yBase + Math.sin(i * l.freq + t * l.spd + l.ph) * l.amp
+                 + Math.sin(i * 0.28 + t * 0.09 + l.ph) * 18,
+      });
+    }
+    const grad = ctx.createLinearGradient(0, yBase - l.amp, 0, yBase + l.amp + 50);
+    grad.addColorStop(0, l.col(0.16));
+    grad.addColorStop(1, l.col(0.0));
+    spline(pts); ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath();
+    ctx.fillStyle = grad; ctx.fill();
+
+    spline(pts); ctx.strokeStyle = l.col(0.7); ctx.lineWidth = 1.8; ctx.stroke();
+
+    const di = Math.abs(Math.floor((t * l.spd * 9 + l.ph * 4) % N));
+    const dp = pts[di] || pts[0];
+    ctx.beginPath(); ctx.arc(dp.x, dp.y, 3.5, 0, Math.PI*2);
+    ctx.fillStyle = l.col(1); ctx.fill();
+    ctx.beginPath(); ctx.arc(dp.x, dp.y, 7, 0, Math.PI*2);
+    ctx.fillStyle = l.col(0.22); ctx.fill();
+  });
+}
+
+const LBLS = [
+  { t: '+12.4%', rx: 0.10, ry: 0.16, col: T, spd: 0.007, ph: 0   },
+  { t: '$84.2K', rx: 0.72, ry: 0.20, col: G, spd: 0.009, ph: 1.2 },
+  { t: '3,241 ↑', rx: 0.80, ry: 0.60, col: B, spd: 0.008, ph: 2.5 },
+  { t: '98.1%',  rx: 0.06, ry: 0.65, col: G, spd: 0.006, ph: 3.8 },
+  { t: '+$2.1M', rx: 0.52, ry: 0.10, col: T, spd: 0.010, ph: 5.0 },
+  { t: 'AOV ↑',  rx: 0.36, ry: 0.83, col: B, spd: 0.007, ph: 0.7 },
+  { t: '↑ Conv', rx: 0.88, ry: 0.38, col: T, spd: 0.009, ph: 4.2 },
+];
+
+function drawLabels(t) {
+  ctx.font = '500 12px "DM Sans",sans-serif';
+  LBLS.forEach(l => {
+    const x = l.rx * W, y = l.ry * H + Math.sin(t * l.spd + l.ph) * 12;
+    const a = 0.35 + Math.sin(t * 0.4 + l.ph) * 0.15;
+    ctx.fillStyle = l.col(a);
+    ctx.fillText(l.t, x, y);
+  });
+}
+
+function drawScan(t) {
+  const sy = (t * 55) % H;
+  const g = ctx.createLinearGradient(0, sy - 28, 0, sy + 4);
+  g.addColorStop(0, G(0)); g.addColorStop(1, G(0.055));
+  ctx.fillStyle = g; ctx.fillRect(0, sy - 28, W, 32);
+  ctx.fillStyle = G(0.09); ctx.fillRect(0, sy, W, 1);
+}
+
+const PARTS = Array.from({length: 60}, () => ({
+  x: Math.random(), y: Math.random(),
+  r: 0.8 + Math.random() * 1.6,
+  spd: 0.00007 + Math.random() * 0.00013,
+  ph: Math.random() * Math.PI * 2,
+  a: 0.18 + Math.random() * 0.38,
+}));
+
+function drawParticles(t) {
+  const vis = PARTS.map(p => ({
+    x: ((p.x + t * p.spd) % 1) * W,
+    y: p.y * H + Math.sin(t * 0.25 + p.ph) * 16,
+    a: p.a, r: p.r,
+  }));
+  const D = 110;
+  for (let i = 0; i < vis.length; i++) for (let j = i+1; j < vis.length; j++) {
+    const dx = vis[i].x - vis[j].x, dy = vis[i].y - vis[j].y;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+    if (dist < D) {
+      ctx.beginPath(); ctx.moveTo(vis[i].x, vis[i].y); ctx.lineTo(vis[j].x, vis[j].y);
+      ctx.strokeStyle = G(0.10 * (1 - dist/D));
+      ctx.lineWidth = 0.6; ctx.stroke();
+    }
+  }
+  vis.forEach(p => {
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+    ctx.fillStyle = G(p.a); ctx.fill();
+  });
+}
+
+function drawDonut(t) {
+  const cx = W - 80, cy = 80, R = 48, r = 33;
+  const segs = [0.40, 0.26, 0.20, 0.14];
+  const cols = [G, T, B, (a) => `rgba(255,255,255,${a})`];
+  let start = -Math.PI / 2 + t * 0.12;
+  segs.forEach((s, i) => {
+    const end = start + s * Math.PI * 2;
+    ctx.beginPath();
+    ctx.arc(cx, cy, R, start, end);
+    ctx.arc(cx, cy, r, end, start, true);
+    ctx.closePath();
+    ctx.fillStyle = cols[i](0.28); ctx.fill();
+    ctx.strokeStyle = cols[i](0.70); ctx.lineWidth = 1; ctx.stroke();
+    start = end;
+  });
+}
+
+function drawSparkCard(t) {
+  const cx = 80, cy = H - 80, cw = 140, ch = 55;
+  ctx.fillStyle = 'rgba(10,20,55,0.65)';
+  ctx.beginPath(); ctx.roundRect(cx - cw/2, cy - ch/2, cw, ch, 6); ctx.fill();
+  ctx.strokeStyle = G(0.28); ctx.lineWidth = 0.5;
+  ctx.beginPath(); ctx.roundRect(cx - cw/2, cy - ch/2, cw, ch, 6); ctx.stroke();
+
+  ctx.font = '400 9px "DM Sans",sans-serif';
+  ctx.fillStyle = G(0.65);
+  ctx.fillText('REVENUE TODAY', cx - cw/2 + 8, cy - ch/2 + 14);
+
+  const val = (84.2 + Math.sin(t * 0.3) * 1.8).toFixed(1);
+  ctx.font = '500 15px "DM Sans",sans-serif';
+  ctx.fillStyle = G(1);
+  ctx.fillText(`$${val}K`, cx - cw/2 + 8, cy - ch/2 + 30);
+
+  const pts = [];
+  for (let i = 0; i < 20; i++) {
+    pts.push({
+      x: cx - cw/2 + 8 + i * 6.2,
+      y: cy + ch/2 - 10 - (Math.sin(i * 0.7 + t * 0.4) * 8 + Math.sin(i*0.3 + t*0.2)*4),
+    });
+  }
+  ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y);
+  pts.slice(1).forEach(p => ctx.lineTo(p.x, p.y));
+  ctx.strokeStyle = T(0.9); ctx.lineWidth = 1.4; ctx.stroke();
+}
+
+let t0 = null;
+function loop(ts) {
+  if (!t0) t0 = ts;
+  const t = (ts - t0) / 1000;
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#07102a'; ctx.fillRect(0, 0, W, H);
+  drawGrid(t);
+  drawScan(t);
+  drawParticles(t);
+  drawLines(t);
+  drawBars(t);
+  drawLabels(t);
+  drawDonut(t);
+  drawSparkCard(t);
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

@@ -1,0 +1,323 @@
+{% extends 'analytics/base.html' %}
+
+{% block page_title %}
+Sales & Forecasting
+{% endblock %}
+
+{% block content %}
+
+<style>
+
+/* ===== TOP GRID ===== */
+.top-grid{
+display:grid;
+grid-template-columns:2fr 1fr;
+gap:20px;
+margin-bottom:20px;
+align-items:stretch;
+}
+
+/* ===== BOX ===== */
+.box{
+background:white;
+padding:20px;
+border-radius:12px;
+box-shadow:0 5px 15px rgba(0,0,0,0.08);
+display:flex;
+flex-direction:column;
+overflow:hidden;
+}
+
+.box-sales{ height:420px; }
+.box-pie{ height:380px; }
+
+/* GRID */
+.grid-2{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:20px;
+margin-bottom:20px;
+}
+
+/* INSIGHT BOX */
+.insight-box{
+padding:14px;
+background:#f8fafc;
+border-left:4px solid #3b82f6;
+border-radius:8px;
+font-size:18px;
+color:#111;
+line-height:1.6;
+}
+
+/* CHART CONTAINER */
+.chart-container{
+flex:1;
+position:relative;
+width:100%;
+height:300px;
+}
+
+/* canvas fix */
+canvas{
+width:100% !important;
+height:100% !important;
+}
+
+/* BUTTON */
+.btn{
+background:#111;
+color:white;
+padding:6px 12px;
+border:none;
+cursor:pointer;
+margin-top:8px;
+border-radius:6px;
+width:auto;
+align-self:flex-start;
+}
+
+</style>
+
+<!-- ===== TOP SECTION ===== -->
+<div class="top-grid">
+
+<div class="box box-sales">
+<h3>Sales Over Time</h3>
+
+<div class="chart-container">
+<canvas id="salesChart"></canvas>
+</div>
+
+<button class="btn" onclick="toggleInsight('salesInsight')">View Insight</button>
+
+<div id="salesInsight" class="insight-box" style="display:none;">
+Shows how sales change over time. Helps identify growth trends, peak periods, and slow months.
+</div>
+
+</div>
+
+<div class="box box-pie">
+<h3>Category-wise Sales</h3>
+<div id="categoryInsight" class="insight-box"></div>
+</div>
+
+</div>
+
+<!-- ===== MIDDLE ===== -->
+<div class="grid-2">
+
+<div class="box">
+<h3>Seasonal Trend</h3>
+<div id="seasonInsight" class="insight-box"></div>
+</div>
+
+<div class="box">
+<h3>Region-wise Sales</h3>
+<div id="regionInsight" class="insight-box"></div>
+</div>
+
+</div>
+
+<!-- ===== FORECAST ===== -->
+<div class="grid-2">
+
+<div class="box">
+<h3>Seasonal Forecast (ARIMA)</h3>
+<canvas id="forecastChart"></canvas>
+
+<button class="btn" onclick="toggleInsight('seasonForecastInsight')">
+View Insight
+</button>
+
+<div id="seasonForecastInsight" class="insight-box" style="display:none;"></div>
+</div>
+
+<div class="box">
+<h3>Category Forecast (Regression)</h3>
+<canvas id="categoryForecastChart"></canvas>
+
+<button class="btn" onclick="toggleInsight('categoryForecastInsight')">
+View Insight
+</button>
+
+<div id="categoryForecastInsight" class="insight-box" style="display:none;"></div>
+</div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+
+// ===== TOGGLE =====
+function toggleInsight(id){
+let el = document.getElementById(id);
+el.style.display = (el.style.display === "none") ? "block" : "none";
+}
+
+// ===== DATA =====
+const salesData = JSON.parse('{{ sales_trends|escapejs }}');
+const categoryData = JSON.parse('{{ category_data|escapejs }}');
+const regionData = JSON.parse('{{ region_data|escapejs }}');
+const forecastValues = JSON.parse('{{ forecast_values|escapejs }}');
+const futureMonths = JSON.parse('{{ future_months|escapejs }}');
+const catForecast = JSON.parse('{{ category_forecast|escapejs }}');
+
+// ===== SALES CHART =====
+new Chart(document.getElementById("salesChart"),{
+type:"line",
+data:{
+labels:salesData.map(i=>i[0]),
+datasets:[{
+data:salesData.map(i=>i[1]),
+borderColor:"#3b82f6",
+tension:0.3,
+fill:false
+}]
+},
+options:{
+responsive:true,
+maintainAspectRatio:false,
+scales:{
+x:{ title:{ display:true, text:"Time (Months)" }},
+y:{ title:{ display:true, text:"Sales Amount" }}
+}
+}
+});
+
+// ===== CATEGORY INSIGHT =====
+function renderCategoryInsight(){
+let sorted = [...categoryData].sort((a,b)=>b[1]-a[1]);
+let html = "";
+
+sorted.forEach((c,i)=>{
+let medal = i===0 ? "🥇" : i===1 ? "🥈" : i===2 ? "🥉" : "•";
+html += `${medal} <b>${c[0]}</b> → ₹${c[1]}<br>`;
+});
+
+let top = sorted[0][0];
+html += `<br>📊 Insight: <b>${top}</b> is the highest revenue driver.`;
+
+document.getElementById("categoryInsight").innerHTML = html;
+}
+
+// ===== FIXED SEASON FUNCTION =====
+function getSeason(month){
+
+month = month.toLowerCase();
+
+// handle numeric formats like 2023-01 or 01-2023
+if(month.includes("-")){
+let parts = month.split("-");
+let m = parts[0].length === 4 ? parts[1] : parts[0];
+
+let num = parseInt(m);
+
+if([12,1,2].includes(num)) return "Winter ❄️";
+if([3,4,5].includes(num)) return "Summer ☀️";
+if([6,7,8].includes(num)) return "Monsoon 🌧️";
+if([9,10,11].includes(num)) return "Festive 🎉";
+}
+
+// fallback text
+if(month.includes("jan") || month.includes("feb") || month.includes("dec")) return "Winter ❄️";
+if(month.includes("mar") || month.includes("apr") || month.includes("may")) return "Summer ☀️";
+if(month.includes("jun") || month.includes("jul") || month.includes("aug")) return "Monsoon 🌧️";
+if(month.includes("sep") || month.includes("oct") || month.includes("nov")) return "Festive 🎉";
+
+return "Unknown";
+}
+
+// ===== SEASON INSIGHT =====
+function renderSeasonInsight(){
+
+let values = salesData.map(i=>i[1]);
+let months = salesData.map(i=>i[0]);
+
+let max = Math.max(...values);
+let min = Math.min(...values);
+
+let peakMonth = months[values.indexOf(max)];
+let lowMonth = months[values.indexOf(min)];
+
+let peakSeason = getSeason(peakMonth);
+
+document.getElementById("seasonInsight").innerHTML = `
+📈 Peak Sales: <b>${peakMonth}</b> (${peakSeason})<br>
+📉 Lowest Sales: <b>${lowMonth}</b><br><br>
+📊 Sales increase during <b>${peakSeason}</b> due to seasonal demand.
+`;
+}
+
+// ===== REGION =====
+function renderRegionInsight(){
+let sorted = [...regionData].sort((a,b)=>b[1]-a[1]);
+let html = "";
+
+sorted.forEach(r=>{
+let emoji = r[1] > 50000 ? "🔥" : r[1] > 20000 ? "⚖️" : "📉";
+html += `${emoji} <b>${r[0]}</b> → ₹${r[1]}<br>`;
+});
+
+html += `<br>📊 Insight: Metro cities generate highest revenue.`;
+
+document.getElementById("regionInsight").innerHTML = html;
+}
+
+// ===== FORECAST =====
+new Chart(document.getElementById("forecastChart"),{
+type:"line",
+data:{ labels:futureMonths, datasets:[{ data:forecastValues, borderColor:"orange" }] },
+options:{ scales:{ x:{title:{display:true,text:"Future Months"}}, y:{title:{display:true,text:"Predicted Sales"}} } }
+});
+
+const names = Object.keys(catForecast);
+const vals = names.map(c => catForecast[c].slice(-1)[0]);
+
+new Chart(document.getElementById("categoryForecastChart"),{
+type:"bar",
+data:{ labels:names, datasets:[{ data:vals }] },
+options:{ scales:{ x:{title:{display:true,text:"Product Categories"}}, y:{title:{display:true,text:"Forecasted Sales"}} } }
+});
+
+// ===== FORECAST INSIGHT =====
+function loadForecastInsights(){
+
+let max = Math.max(...forecastValues);
+let min = Math.min(...forecastValues);
+
+let peak = futureMonths[forecastValues.indexOf(max)];
+let low = futureMonths[forecastValues.indexOf(min)];
+
+document.getElementById("seasonForecastInsight").innerHTML = `
+📈 Peak expected: <b>${peak}</b><br>
+📉 Lowest expected: <b>${low}</b><br><br>
+👉 Helps in inventory planning and demand forecasting.
+`;
+
+let text = "";
+
+names.forEach(c=>{
+let arr = catForecast[c];
+let trend = arr[arr.length-1] - arr[0];
+
+let label = "Stable";
+if(trend > 0) label = "Growing 📈";
+if(trend < 0) label = "Declining 📉";
+
+text += `• <b>${c}</b> → ${label}<br>`;
+});
+
+document.getElementById("categoryForecastInsight").innerHTML = text;
+}
+
+// ===== INIT =====
+renderCategoryInsight();
+renderSeasonInsight();
+renderRegionInsight();
+loadForecastInsights();
+
+</script>
+
+{% endblock %}

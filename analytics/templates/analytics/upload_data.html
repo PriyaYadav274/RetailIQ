@@ -1,0 +1,608 @@
+{% extends 'analytics/base.html' %}
+
+{% block page_title %}
+Upload Data
+{% endblock %}
+
+{% block content %}
+
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0d14;
+    --surface: #111622;
+    --surface2: #161c2d;
+    --border: rgba(255,255,255,0.07);
+    --accent: #4f7dff;
+    --accent2: #00e5b0;
+    --accent-glow: rgba(79,125,255,0.25);
+    --text: #e8ecf5;
+    --text-muted: #7b86a0;
+    --success-bg: rgba(0,229,176,0.08);
+    --success-border: rgba(0,229,176,0.25);
+    --success-text: #00e5b0;
+    --error-bg: rgba(255,80,100,0.08);
+    --error-border: rgba(255,80,100,0.25);
+    --error-text: #ff5064;
+  }
+
+  .upload-page {
+    font-family: 'DM Sans', sans-serif;
+    min-height: 70vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Google Fonts import */
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
+
+  /* Ambient background blobs */
+  .upload-page::before,
+  .upload-page::after {
+    content: '';
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .upload-page::before {
+    width: 520px; height: 520px;
+    background: radial-gradient(circle, rgba(79,125,255,0.12) 0%, transparent 70%);
+    top: -100px; right: -100px;
+    animation: drift1 10s ease-in-out infinite alternate;
+  }
+  .upload-page::after {
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(0,229,176,0.08) 0%, transparent 70%);
+    bottom: -80px; left: -80px;
+    animation: drift2 12s ease-in-out infinite alternate;
+  }
+
+  @keyframes drift1 {
+    from { transform: translate(0, 0); }
+    to   { transform: translate(-30px, 30px); }
+  }
+  @keyframes drift2 {
+    from { transform: translate(0, 0); }
+    to   { transform: translate(20px, -20px); }
+  }
+
+  /* Card */
+  .upload-card {
+    position: relative;
+    z-index: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    width: 100%;
+    max-width: 480px;
+    overflow: hidden;
+    animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(32px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Top accent bar */
+  .card-top-bar {
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+  }
+
+  .card-inner {
+    padding: 36px 36px 32px;
+  }
+
+  /* Header */
+  .upload-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 8px;
+  }
+
+  .upload-icon-wrap {
+    width: 46px;
+    height: 46px;
+    border-radius: 13px;
+    background: linear-gradient(135deg, rgba(79,125,255,0.18), rgba(0,229,176,0.1));
+    border: 1px solid rgba(79,125,255,0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+
+  .upload-header h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.3px;
+  }
+
+  .upload-subtitle {
+    color: var(--text-muted);
+    font-size: 13.5px;
+    line-height: 1.6;
+    margin-bottom: 28px;
+    padding-left: 60px;
+    margin-top: 2px;
+  }
+
+  /* Supported format tags */
+  .formats {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+
+  .fmt-tag {
+    font-family: 'Syne', sans-serif;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+
+  /* Drop zone */
+  .drop-zone {
+    position: relative;
+    border: 2px dashed rgba(79,125,255,0.25);
+    border-radius: 16px;
+    padding: 36px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    background: rgba(79,125,255,0.03);
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+
+  .drop-zone::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 14px;
+    background: linear-gradient(135deg, rgba(79,125,255,0.06) 0%, transparent 60%);
+    opacity: 0;
+    transition: opacity 0.25s;
+    pointer-events: none;
+  }
+
+  .drop-zone:hover,
+  .drop-zone.drag-over {
+    border-color: var(--accent);
+    background: rgba(79,125,255,0.06);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px var(--accent-glow);
+  }
+
+  .drop-zone:hover::after,
+  .drop-zone.drag-over::after {
+    opacity: 1;
+  }
+
+  .dz-icon {
+    font-size: 36px;
+    margin-bottom: 10px;
+    display: block;
+  }
+
+  .dz-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .dz-sub {
+    font-size: 12.5px;
+    color: var(--text-muted);
+  }
+
+  .dz-sub span {
+    color: var(--accent);
+    font-weight: 500;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
+  .drop-zone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  /* File info row */
+  .file-info {
+    display: none;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 20px;
+    animation: fadeIn 0.3s ease;
+  }
+
+  .file-info.visible {
+    display: flex;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .file-emoji { font-size: 22px; flex-shrink: 0; }
+
+  .file-name {
+    font-size: 13px;
+    color: var(--text);
+    font-weight: 500;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .file-size {
+    font-size: 12px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+
+  .file-clear {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 0 4px;
+    transition: color 0.2s;
+    line-height: 1;
+  }
+
+  .file-clear:hover { color: #ff5064; }
+
+  /* Action buttons */
+  .upload-actions {
+    display: flex;
+    gap: 10px;
+  }
+
+  .btn {
+    padding: 13px 20px;
+    border: none;
+    border-radius: 12px;
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    letter-spacing: 0.2px;
+  }
+
+  .btn-upload {
+    flex: 1;
+    background: linear-gradient(135deg, var(--accent), #6b9aff);
+    color: white;
+    box-shadow: 0 4px 16px rgba(79,125,255,0.3);
+  }
+
+  .btn-upload:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(79,125,255,0.4);
+  }
+
+  .btn-upload:active { transform: translateY(0); }
+
+  .btn-refresh {
+    flex: 0 0 auto;
+    padding: 13px 16px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+  }
+
+  .btn-refresh:hover {
+    border-color: rgba(0,229,176,0.3);
+    color: var(--accent2);
+    background: rgba(0,229,176,0.06);
+    transform: translateY(-2px);
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+
+  .spin-icon { display: inline-block; }
+  .spin-icon.spinning { animation: spin 0.45s ease; }
+
+  /* Status messages */
+  .upload-msg {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 13.5px;
+    font-weight: 500;
+    margin-top: 16px;
+    animation: fadeIn 0.3s ease;
+  }
+
+  .upload-msg.visible { display: flex; }
+
+  .msg-success {
+    background: var(--success-bg);
+    border: 1px solid var(--success-border);
+    color: var(--success-text);
+  }
+
+  .msg-error {
+    background: var(--error-bg);
+    border: 1px solid var(--error-border);
+    color: var(--error-text);
+  }
+
+  .msg-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .msg-success .msg-dot {
+    background: var(--success-text);
+    box-shadow: 0 0 8px var(--success-text);
+  }
+
+  .msg-error .msg-dot {
+    background: var(--error-text);
+    box-shadow: 0 0 8px var(--error-text);
+  }
+
+  /* Card footer */
+  .card-footer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 36px;
+    border-top: 1px solid var(--border);
+    background: rgba(255,255,255,0.015);
+  }
+
+  .footer-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent2);
+    box-shadow: 0 0 8px var(--accent2);
+    animation: pulse 2s ease-in-out infinite;
+    flex-shrink: 0;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.35; }
+  }
+
+  .footer-text {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+</style>
+
+<div class="upload-page">
+  <div class="upload-card">
+
+    <div class="card-top-bar"></div>
+
+    <div class="card-inner">
+
+      <!-- Header -->
+      <div class="upload-header">
+        <div class="upload-icon-wrap">📂</div>
+        <h3>Upload Dataset</h3>
+      </div>
+      <p class="upload-subtitle">Select a retail dataset to refresh the entire analytics dashboard.</p>
+
+      <!-- Format tags -->
+      <div class="formats">
+        <span class="fmt-tag">CSV</span>
+        <span class="fmt-tag">XLSX</span>
+        <span class="fmt-tag">XLS</span>
+        <span class="fmt-tag">JSON</span>
+      </div>
+
+      <!-- Upload form -->
+      <form method="POST" enctype="multipart/form-data" id="uploadForm">
+        {% csrf_token %}
+
+        <div class="drop-zone" id="dropZone">
+          <input type="file" name="file" id="fileInput" accept=".csv,.xlsx,.xls,.json" required>
+          <span class="dz-icon">☁️</span>
+          <div class="dz-title">Drop your file here</div>
+          <div class="dz-sub">or <span>browse to choose</span></div>
+        </div>
+
+        <!-- File preview row -->
+        <div class="file-info" id="fileInfo">
+          <span class="file-emoji" id="fileEmoji">📄</span>
+          <span class="file-name" id="fileName">—</span>
+          <span class="file-size" id="fileSize"></span>
+          <button type="button" class="file-clear" id="fileClear" title="Remove file">✕</button>
+        </div>
+
+        <!-- Buttons -->
+        <div class="upload-actions">
+          <button type="submit" class="btn btn-upload">
+            <span>⬆</span> Upload Data
+          </button>
+          <button type="button" class="btn btn-refresh" id="refreshBtn" title="Refresh page">
+            <span class="spin-icon" id="spinIcon">🔄</span>
+          </button>
+        </div>
+
+      </form>
+
+      <!-- Django success / error messages -->
+      {% if success %}
+        <div class="upload-msg msg-success visible">
+          <div class="msg-dot"></div>
+          <span>{{ success }}</span>
+        </div>
+      {% endif %}
+
+      {% if error %}
+        <div class="upload-msg msg-error visible">
+          <div class="msg-dot"></div>
+          <span>{{ error }}</span>
+        </div>
+      {% endif %}
+
+      <!-- JS-driven inline validation message -->
+      <div class="upload-msg" id="jsMsg">
+        <div class="msg-dot"></div>
+        <span id="jsMsgText"></span>
+      </div>
+
+    </div><!-- /.card-inner -->
+
+    <div class="card-footer">
+      <div class="footer-dot"></div>
+      <span class="footer-text">Max file size: 50 MB &nbsp;·&nbsp; Supported formats: CSV, Excel, JSON</span>
+    </div>
+
+  </div><!-- /.upload-card -->
+</div><!-- /.upload-page -->
+
+<script>
+  (function () {
+
+    const fileInput  = document.getElementById('fileInput');
+    const dropZone   = document.getElementById('dropZone');
+    const fileInfo   = document.getElementById('fileInfo');
+    const fileEmoji  = document.getElementById('fileEmoji');
+    const fileName   = document.getElementById('fileName');
+    const fileSize   = document.getElementById('fileSize');
+    const fileClear  = document.getElementById('fileClear');
+    const jsMsg      = document.getElementById('jsMsg');
+    const jsMsgText  = document.getElementById('jsMsgText');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const spinIcon   = document.getElementById('spinIcon');
+
+    const EXT_ICONS = { csv: '📊', xlsx: '📗', xls: '📗', json: '📋' };
+    const ALLOWED   = ['csv', 'xlsx', 'xls', 'json'];
+
+    function formatBytes(bytes) {
+      if (bytes < 1024)    return bytes + ' B';
+      if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / 1048576).toFixed(1) + ' MB';
+    }
+
+    function showMsg(type, text) {
+      jsMsg.className = 'upload-msg visible ' + (type === 'success' ? 'msg-success' : 'msg-error');
+      jsMsgText.textContent = text;
+    }
+
+    function hideMsg() {
+      jsMsg.classList.remove('visible');
+    }
+
+    function applyFile(file) {
+      const ext = file.name.split('.').pop().toLowerCase();
+
+      if (!ALLOWED.includes(ext)) {
+        showMsg('error', 'Only CSV, Excel (.xlsx / .xls), or JSON files are allowed.');
+        fileInput.value = '';
+        fileInfo.classList.remove('visible');
+        return;
+      }
+
+      fileEmoji.textContent = EXT_ICONS[ext] || '📄';
+      fileName.textContent  = file.name;
+      fileSize.textContent  = formatBytes(file.size);
+      fileInfo.classList.add('visible');
+      showMsg('success', '"' + file.name + '" is ready to upload.');
+    }
+
+    /* File input change */
+    fileInput.addEventListener('change', function () {
+      if (fileInput.files[0]) applyFile(fileInput.files[0]);
+    });
+
+    /* Clear button */
+    fileClear.addEventListener('click', function () {
+      fileInput.value = '';
+      fileInfo.classList.remove('visible');
+      hideMsg();
+    });
+
+    /* Drag & drop */
+    ['dragenter', 'dragover'].forEach(function (evt) {
+      dropZone.addEventListener(evt, function (e) {
+        e.preventDefault();
+        dropZone.classList.add('drag-over');
+      });
+    });
+
+    ['dragleave', 'drop'].forEach(function (evt) {
+      dropZone.addEventListener(evt, function (e) {
+        e.preventDefault();
+        dropZone.classList.remove('drag-over');
+      });
+    });
+
+    dropZone.addEventListener('drop', function (e) {
+      var file = e.dataTransfer.files[0];
+      if (!file) return;
+      try {
+        var dt = new DataTransfer();
+        dt.items.add(file);
+        fileInput.files = dt.files;
+      } catch (err) { /* Safari fallback — file won't appear in input, but we show preview */ }
+      applyFile(file);
+    });
+
+    /* Refresh with spin animation */
+    refreshBtn.addEventListener('click', function () {
+      spinIcon.classList.add('spinning');
+      setTimeout(function () { location.reload(); }, 450);
+    });
+
+    spinIcon.addEventListener('animationend', function () {
+      spinIcon.classList.remove('spinning');
+    });
+
+  })();
+</script>
+
+{% endblock %}
