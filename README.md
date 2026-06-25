@@ -58,31 +58,31 @@ The system helps businesses analyze sales performance, customer behavior, produc
 
 ### Landing Page
 
-<img src="RetailIQ/backend/screenshots/login.jpg" width="800"/>
+<img src="RetailIQ/screenshots/login.jpg" width="800"/>
 
 ### Upload Data
 
-<img src="RetailIQ/backend/screenshots/upload_data.jpg" width="800"/> 
+<img src="RetailIQ/screenshots/upload_data.jpg" width="800"/> 
 
 ### Dashboard
 
-<img src="RetailIQ/backend/screenshots/dashboard.jpeg" width="800"/>
+<img src="RetailIQ/screenshots/dashboard.jpeg" width="800"/>
 
 ### Sales & Forecasting
 
-<img src="RetailIQ/backend/screenshots/sales_forecasting.jpeg" width="800"/> 
+<img src="RetailIQ/screenshots/sales_forecasting.jpeg" width="800"/> 
 
 ### Customer Analytics
 
-<img src="RetailIQ/backend/screenshots/customer_analytics.jpeg" width="800"/> 
+<img src="RetailIQ/screenshots/customer_analytics.jpeg" width="800"/> 
 
 ### Product Analytics
 
-<img src="RetailIQ/backend/screenshots/products_analytics.jpeg" width="800"/> 
+<img src="RetailIQ/screenshots/products_analytics.jpeg" width="800"/> 
 
 ### Report Page
 
-<img src="RetailIQ/backend/screenshots/report.jpeg" width="800"/> 
+<img src="RetailIQ/screenshots/report.jpeg" width="800"/> 
 
 ## Project Report
 
