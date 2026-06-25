@@ -58,7 +58,7 @@ The system helps businesses analyze sales performance, customer behavior, produc
 
 ### Landing Page
 
-<img src="RetailIQ/tree/main/screenshots/login.jpg" width="800"/>
+<img src="screenshots/login.jpg" width="800"/>
 
 ### Upload Data
 
