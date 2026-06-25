@@ -62,33 +62,33 @@ The system helps businesses analyze sales performance, customer behavior, produc
 
 ### Upload Data
 
-<img src="RetailIQ/tree/main/screenshots/upload_data.jpg" width="800"/> 
+<img src="screenshots/upload_data.jpg" width="800"/> 
 
 ### Dashboard
 
-<img src="RetailIQ/tree/main/screenshots/dashboard.jpeg" width="800"/>
+<img src="screenshots/dashboard.jpeg" width="800"/>
 
 ### Sales & Forecasting
 
-<img src="RetailIQ/tree/main/screenshots/sales_forecasting.jpeg" width="800"/> 
+<img src="screenshots/sales_forecasting.jpeg" width="800"/> 
 
 ### Customer Analytics
 
-<img src="RetailIQ/tree/main/screenshots/customer_analytics.jpeg" width="800"/> 
+<img src="screenshots/customer_analytics.jpeg" width="800"/> 
 
 ### Product Analytics
 
-<img src="RetailIQ/tree/main/screenshots/products_analytics.jpeg" width="800"/> 
+<img src="screenshots/products_analytics.jpeg" width="800"/> 
 
 ### Report Page
 
-<img src="RetailIQ/tree/main/screenshots/report.jpeg" width="800"/> 
+<img src="screenshots/report.jpeg" width="800"/> 
 
 ## Project Report
 
 Detailed documentation is available in:
 
-[View Report](docs/RetailIQ_REPORT.pdf)
+[View Report](RetailIQ_REPORT.pdf)
 
 ## Author
 
